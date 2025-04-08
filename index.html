@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Symbolic Math Solver</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      min-height: 100vh;
+      color: #333;
+    }
+    h1 {
+      font-size: 2.5em;
+      color: #2c3e50;
+      margin-bottom: 10px;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+    }
+    .container {
+      background: white;
+      border-radius: 15px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      margin-top: 20px;
+    }
+    .input-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    input[type="text"] {
+      flex: 1;
+      min-width: 200px;
+      padding: 12px;
+      font-size: 1.1em;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      outline: none;
+      transition: border-color 0.3s;
+    }
+    input[type="text"]:focus {
+      border-color: #3498db;
+    }
+    button {
+      padding: 12px 24px;
+      font-size: 1.1em;
+      background-color: #3498db;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s, transform 0.2s;
+    }
+    button:hover {
+      background-color: #2980b9;
+      transform: translateY(-2px);
+    }
+    button:active {
+      transform: translateY(0);
+    }
+    #result {
+      margin-top: 20px;
+      font-size: 1.3em;
+      color: #2c3e50;
+      background: #ecf0f1;
+      padding: 15px;
+      border-radius: 8px;
+      word-wrap: break-word;
+    }
+    .examples {
+      margin: 20px 0;
+      font-size: 0.9em;
+      color: #7f8c8d;
+    }
+    .examples span {
+      background: #ecf0f1;
+      padding: 5px 10px;
+      border-radius: 5px;
+      margin: 0 5px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    .examples span:hover {
+      background: #dfe6e9;
+    }
+    .history {
+      margin-top: 30px;
+    }
+    .history h3 {
+      color: #2c3e50;
+      margin-bottom: 10px;
+    }
+    .history ul {
+      list-style: none;
+      padding: 0;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    .history li {
+      background: #f9f9f9;
+      padding: 10px;
+      margin-bottom: 5px;
+      border-radius: 5px;
+      font-size: 1em;
+      color: #555;
+      display: flex;
+      justify-content: space-between;
+    }
+    .history li span {
+      font-family: monospace;
+    }
+    .code-showcase {
+      margin-top: 40px;
+      text-align: left;
+    }
+    .code-showcase h3 {
+      color: #2c3e50;
+      margin-bottom: 15px;
+    }
+    pre {
+      background: #2d2d2d;
+      color: #f8f8f2;
+      padding: 15px;
+      border-radius: 8px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9em;
+      overflow-x: auto;
+      white-space: pre-wrap;
+    }
+    code .keyword { color: #ff79c6; }
+    code .class { color: #8be9fd; }
+    code .string { color: #f1fa8c; }
+    code .number { color: #bd93f9; }
+    code .comment { color: #6272a4; }
+    @media (max-width: 600px) {
+      .input-group {
+        flex-direction: column;
+      }
+      button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>Symbolic Math Solver</h1>
+  <div class="container">
+    <p>Enter an expression or equation to simplify or solve for x</p>
+    <div class="input-group">
+      <input type="text" id="input" placeholder="e.g., 2*x+3*x+1=0" />
+      <button onclick="simplify()">Simplify</button>
+      <button onclick="solve()">Solve for x</button>
+    </div>
+    <div class="examples">
+      Examples:
+      <span onclick="fillInput('2*x+3*x+3-4')">2*x+3*x+3-4</span>
+      <span onclick="fillInput('2*x+3=0')">2*x+3=0</span>
+      <span onclick="fillInput('x+-2*x+5+3')">x+-2*x+5+3</span>
+    </div>
+    <div id="result"></div>
+    <div class="history">
+      <h3>History</h3>
+      <ul id="history-list"></ul>
+    </div>
+    <div class="code-showcase">
+      <h3>Code Behind the Magic</h3>
+      <pre><code><span class="keyword">class</span> <span class="class">plusNode</span> <span class="keyword">extends</span> <span class="class">Node</span> {
+  <span class="keyword">constructor</span>(left, right) {
+    <span class="keyword">super</span>();
+    <span class="keyword">this</span>.left = left;
+    <span class="keyword">this</span>.right = right;
+  }
+  <span class="keyword">toString</span>() {
+    <span class="keyword">const</span> rightStr = <span class="keyword">this</span>.right.toString();
+    <span class="keyword">if</span> (rightStr.startsWith(<span class="string">"-"</span>)) {
+      <span class="keyword">return</span> <span class="string">`\${this.left.toString()} - \${rightStr.slice(1)}`</span>;
+    }
+    <span class="keyword">return</span> <span class="string">`(\${this.left.toString()} + \${rightStr})`</span>;
+  }
+  <span class="keyword">simplify</span>() {
+    <span class="keyword">const</span> left = <span class="keyword">this</span>.left.simplify();
+    <span class="keyword">const</span> right = <span class="keyword">this</span>.right.simplify();
+    <span class="keyword">const</span> terms = collectTerms(<span class="keyword">this</span>);
+    <span class="keyword">const</span> xCoef = terms.x || <span class="number">0</span>;
+    <span class="keyword">const</span> constant = terms.constant || <span class="number">0</span>;
+    <span class="keyword">if</span> (xCoef === <span class="number">0</span> && constant === <span class="number">0</span>) <span class="keyword">return new</span> <span class="class">NumberNode</span>(<span class="number">0</span>);
+    <span class="keyword">if</span> (xCoef === <span class="number">0</span>) <span class="keyword">return new</span> <span class="class">NumberNode</span>(constant);
+    <span class="keyword">if</span> (constant === <span class="number">0</span>)
+      <span class="keyword">return new</span> <span class="class">multiplyNode</span>(<span class="keyword">new</span> <span class="class">NumberNode</span>(xCoef), <span class="keyword">new</span> <span class="class">SymbolNode</span>(<span class="string">"x"</span>));
+    <span class="keyword">const</span> xTerm = <span class="keyword">new</span> <span class="class">multiplyNode</span>(<span class="keyword">new</span> <span class="class">NumberNode</span>(xCoef), <span class="keyword">new</span> <span class="class">SymbolNode</span>(<span class="string">"x"</span>));
+    <span class="keyword">return new</span> <span class="class">plusNode</span>(xTerm, <span class="keyword">new</span> <span class="class">NumberNode</span>(constant));
+  }
+}</code></pre>
+      <pre><code><span class="keyword">function</span> tokenize(str) {
+  <span class="keyword">const</span> operators = [<span class="string">"+"</span>, <span class="string">"-"</span>, <span class="string">"*"</span>, <span class="string">"="</span>];
+  <span class="keyword">const</span> tokens = [];
+  <span class="keyword">let</span> current = <span class="string">""</span>;
+  <span class="keyword">for</span> (<span class="keyword">let</span> i = <span class="number">0</span>; i < str.length; i++) {
+    <span class="keyword">if</span> (operators.includes(str[i])) {
+      <span class="keyword">if</span> (current) {
+        tokens.push(current);
+        current = <span class="string">""</span>;
+      }
+      <span class="keyword">if</span> (
+        str[i] === <span class="string">"-"</span> &&
+        (i === <span class="number">0</span> || operators.includes(str[i - <span class="number">1</span>])) &&
+        i + <span class="number">1</span> < str.length &&
+        /\d/.test(str[i + <span class="number">1</span>])
+      ) {
+        current = <span class="string">"-"</span>;
+      } <span class="keyword">else</span> {
+        tokens.push(str[i]);
+      }
+    } <span class="keyword">else</span> {
+      current += str[i];
+    }
+  }
+  <span class="keyword">if</span> (current) tokens.push(current);
+  <span class="keyword">return</span> tokens.filter((t) => t !== <span class="string">""</span>);
+}</code></pre>
+      <pre><code><span class="keyword">function</span> parseTerm(tokens, start) {
+  <span class="keyword">if</span> (start >= tokens.length) <span class="keyword">throw new</span> <span class="class">Error</span>(<span class="string">"Invalid term: no tokens left"</span>);
+  <span class="keyword">if</span> (start + <span class="number">2</span> < tokens.length && tokens[start + <span class="number">1</span>] === <span class="string">"*"</span>) {
+    <span class="keyword">const</span> coef = <span class="keyword">new</span> <span class="class">NumberNode</span>(parseFloat(tokens[start]));
+    <span class="keyword">const</span> varX = <span class="keyword">new</span> <span class="class">SymbolNode</span>(tokens[start + <span class="number">2</span>]);
+    <span class="keyword">const</span> node = <span class="keyword">new</span> <span class="class">multiplyNode</span>(coef, varX);
+    node.tokensConsumed = <span class="number">3</span>;
+    <span class="keyword">return</span> node;
+  } <span class="keyword">else</span> {
+    <span class="keyword">const</span> value = parseFloat(tokens[start]);
+    <span class="keyword">const</span> node = isNaN(value) ? <span class="keyword">new</span> <span class="class">SymbolNode</span>(tokens[start]) : <span class="keyword">new</span> <span class="class">NumberNode</span>(value);
+    node.tokensConsumed = <span class="number">1</span>;
+    <span class="keyword">return</span> node;
+  }
+}</code></pre>
+    </div>
+  </div>
+
+  <script>
+    async function sendRequest(endpoint, expression) {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ expression })
+      });
+      const data = await response.json();
+      if (data.error) throw new Error(data.error);
+      return data.result;
+    }
+
+    function displayResult(text) {
+      const resultDiv = document.getElementById('result');
+      resultDiv.textContent = text;
+      addToHistory(text);
+    }
+
+    function addToHistory(text) {
+      const historyList = document.getElementById('history-list');
+      const li = document.createElement('li');
+      li.innerHTML = `<span>${text}</span> <span>${new Date().toLocaleTimeString()}</span>`;
+      historyList.insertBefore(li, historyList.firstChild);
+      if (historyList.children.length > 10) {
+        historyList.removeChild(historyList.lastChild);
+      }
+    }
+
+    function fillInput(example) {
+      document.getElementById('input').value = example;
+    }
+
+    async function simplify() {
+      const input = document.getElementById('input').value;
+      try {
+        const result = await sendRequest('/simplify', input);
+        displayResult(`Simplified: ${result}`);
+      } catch (error) {
+        displayResult(`Error: ${error.message}`);
+      }
+    }
+
+    async function solve() {
+      const input = document.getElementById('input').value;
+      try {
+        const result = await sendRequest('/solve', input);
+        displayResult(result);
+      } catch (error) {
+        displayResult(`Error: ${error.message}`);
+      }
+    }
+  </script>
+</body>
+</html>
