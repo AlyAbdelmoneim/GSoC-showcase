@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Symbolic Math Solver</title>
   <style>
+    /* Your existing CSS remains unchanged */
     body {
       font-family: 'Segoe UI', Arial, sans-serif;
       max-width: 800px;
@@ -169,92 +170,231 @@
       <h3>History</h3>
       <ul id="history-list"></ul>
     </div>
-    <div class="code-showcase">
-      <h3>Code Behind the Magic</h3>
-      <pre><code><span class="keyword">class</span> <span class="class">plusNode</span> <span class="keyword">extends</span> <span class="class">Node</span> {
-  <span class="keyword">constructor</span>(left, right) {
-    <span class="keyword">super</span>();
-    <span class="keyword">this</span>.left = left;
-    <span class="keyword">this</span>.right = right;
-  }
-  <span class="keyword">toString</span>() {
-    <span class="keyword">const</span> rightStr = <span class="keyword">this</span>.right.toString();
-    <span class="keyword">if</span> (rightStr.startsWith(<span class="string">"-"</span>)) {
-      <span class="keyword">return</span> <span class="string">`\${this.left.toString()} - \${rightStr.slice(1)}`</span>;
-    }
-    <span class="keyword">return</span> <span class="string">`(\${this.left.toString()} + \${rightStr})`</span>;
-  }
-  <span class="keyword">simplify</span>() {
-    <span class="keyword">const</span> left = <span class="keyword">this</span>.left.simplify();
-    <span class="keyword">const</span> right = <span class="keyword">this</span>.right.simplify();
-    <span class="keyword">const</span> terms = collectTerms(<span class="keyword">this</span>);
-    <span class="keyword">const</span> xCoef = terms.x || <span class="number">0</span>;
-    <span class="keyword">const</span> constant = terms.constant || <span class="number">0</span>;
-    <span class="keyword">if</span> (xCoef === <span class="number">0</span> && constant === <span class="number">0</span>) <span class="keyword">return new</span> <span class="class">NumberNode</span>(<span class="number">0</span>);
-    <span class="keyword">if</span> (xCoef === <span class="number">0</span>) <span class="keyword">return new</span> <span class="class">NumberNode</span>(constant);
-    <span class="keyword">if</span> (constant === <span class="number">0</span>)
-      <span class="keyword">return new</span> <span class="class">multiplyNode</span>(<span class="keyword">new</span> <span class="class">NumberNode</span>(xCoef), <span class="keyword">new</span> <span class="class">SymbolNode</span>(<span class="string">"x"</span>));
-    <span class="keyword">const</span> xTerm = <span class="keyword">new</span> <span class="class">multiplyNode</span>(<span class="keyword">new</span> <span class="class">NumberNode</span>(xCoef), <span class="keyword">new</span> <span class="class">SymbolNode</span>(<span class="string">"x"</span>));
-    <span class="keyword">return new</span> <span class="class">plusNode</span>(xTerm, <span class="keyword">new</span> <span class="class">NumberNode</span>(constant));
-  }
-}</code></pre>
-      <pre><code><span class="keyword">function</span> tokenize(str) {
-  <span class="keyword">const</span> operators = [<span class="string">"+"</span>, <span class="string">"-"</span>, <span class="string">"*"</span>, <span class="string">"="</span>];
-  <span class="keyword">const</span> tokens = [];
-  <span class="keyword">let</span> current = <span class="string">""</span>;
-  <span class="keyword">for</span> (<span class="keyword">let</span> i = <span class="number">0</span>; i < str.length; i++) {
-    <span class="keyword">if</span> (operators.includes(str[i])) {
-      <span class="keyword">if</span> (current) {
-        tokens.push(current);
-        current = <span class="string">""</span>;
-      }
-      <span class="keyword">if</span> (
-        str[i] === <span class="string">"-"</span> &&
-        (i === <span class="number">0</span> || operators.includes(str[i - <span class="number">1</span>])) &&
-        i + <span class="number">1</span> < str.length &&
-        /\d/.test(str[i + <span class="number">1</span>])
-      ) {
-        current = <span class="string">"-"</span>;
-      } <span class="keyword">else</span> {
-        tokens.push(str[i]);
-      }
-    } <span class="keyword">else</span> {
-      current += str[i];
-    }
-  }
-  <span class="keyword">if</span> (current) tokens.push(current);
-  <span class="keyword">return</span> tokens.filter((t) => t !== <span class="string">""</span>);
-}</code></pre>
-      <pre><code><span class="keyword">function</span> parseTerm(tokens, start) {
-  <span class="keyword">if</span> (start >= tokens.length) <span class="keyword">throw new</span> <span class="class">Error</span>(<span class="string">"Invalid term: no tokens left"</span>);
-  <span class="keyword">if</span> (start + <span class="number">2</span> < tokens.length && tokens[start + <span class="number">1</span>] === <span class="string">"*"</span>) {
-    <span class="keyword">const</span> coef = <span class="keyword">new</span> <span class="class">NumberNode</span>(parseFloat(tokens[start]));
-    <span class="keyword">const</span> varX = <span class="keyword">new</span> <span class="class">SymbolNode</span>(tokens[start + <span class="number">2</span>]);
-    <span class="keyword">const</span> node = <span class="keyword">new</span> <span class="class">multiplyNode</span>(coef, varX);
-    node.tokensConsumed = <span class="number">3</span>;
-    <span class="keyword">return</span> node;
-  } <span class="keyword">else</span> {
-    <span class="keyword">const</span> value = parseFloat(tokens[start]);
-    <span class="keyword">const</span> node = isNaN(value) ? <span class="keyword">new</span> <span class="class">SymbolNode</span>(tokens[start]) : <span class="keyword">new</span> <span class="class">NumberNode</span>(value);
-    node.tokensConsumed = <span class="number">1</span>;
-    <span class="keyword">return</span> node;
-  }
-}</code></pre>
-    </div>
   </div>
 
   <script>
-    async function sendRequest(endpoint, expression) {
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ expression })
-      });
-      const data = await response.json();
-      if (data.error) throw new Error(data.error);
-      return data.result;
+    // AST Classes and Functions from ast.mjs
+    class Node {
+      toString() { return ""; }
+      evaluate() { throw new Error("Evaluate not implemented"); }
+      solve() { return this; }
+      simplify() { return this; }
     }
 
+    class SymbolNode extends Node {
+      constructor(value) {
+        super();
+        this.value = value;
+      }
+      toString() { return this.value; }
+      evaluate(variables = {}) { return variables[this.value] || 0; }
+      simplify() { return this; }
+    }
+
+    class NumberNode extends Node {
+      constructor(value) {
+        super();
+        this.value = value;
+      }
+      toString() { return this.value.toString(); }
+      evaluate() { return this.value; }
+      simplify() { return this; }
+    }
+
+    class plusNode extends Node {
+      constructor(left, right) {
+        super();
+        this.left = left;
+        this.right = right;
+      }
+      toString() {
+        const rightStr = this.right.toString();
+        if (rightStr.startsWith("-")) {
+          return `${this.left.toString()} - ${rightStr.slice(1)}`;
+        }
+        return `(${this.left.toString()} + ${rightStr})`;
+      }
+      evaluate(variables = {}) {
+        return this.left.evaluate(variables) + this.right.evaluate(variables);
+      }
+      simplify() {
+        const left = this.left.simplify();
+        const right = this.right.simplify();
+        const terms = collectTerms(this);
+        const xCoef = terms.x || 0;
+        const constant = terms.constant || 0;
+        if (xCoef === 0 && constant === 0) return new NumberNode(0);
+        if (xCoef === 0) return new NumberNode(constant);
+        if (constant === 0)
+          return new multiplyNode(new NumberNode(xCoef), new SymbolNode("x"));
+        const xTerm = new multiplyNode(new NumberNode(xCoef), new SymbolNode("x"));
+        return new plusNode(xTerm, new NumberNode(constant));
+      }
+    }
+
+    class minusNode extends Node {
+      constructor(left, right) {
+        super();
+        this.left = left;
+        this.right = right;
+      }
+      toString() { return `(${this.left.toString()} - ${this.right.toString()})`; }
+      evaluate(variables = {}) {
+        return this.left.evaluate(variables) - this.right.evaluate(variables);
+      }
+      simplify() {
+        const left = this.left.simplify();
+        const right = this.right.simplify();
+        return new plusNode(left, new multiplyNode(new NumberNode(-1), right)).simplify();
+      }
+    }
+
+    class multiplyNode extends Node {
+      constructor(left, right) {
+        super();
+        this.left = left;
+        this.right = right;
+      }
+      toString() {
+        if (this.left instanceof NumberNode && this.left.value === -1 && this.right instanceof SymbolNode) {
+          return `-${this.right.toString()}`;
+        }
+        return `(${this.left.toString()} * ${this.right.toString()})`;
+      }
+      evaluate(variables = {}) {
+        return this.left.evaluate(variables) * this.right.evaluate(variables);
+      }
+      simplify() {
+        const left = this.left.simplify();
+        const right = this.right.simplify();
+        if (right instanceof NumberNode && right.value === 1) return left;
+        if (left instanceof NumberNode && left.value === 1) return right;
+        if (right instanceof NumberNode && right.value === 0) return new NumberNode(0);
+        if (left instanceof NumberNode && left.value === 0) return new NumberNode(0);
+        if (left instanceof NumberNode && right instanceof NumberNode) {
+          return new NumberNode(left.value * right.value);
+        }
+        return new multiplyNode(left, right);
+      }
+    }
+
+    class EquationSolver {
+      constructor(left, right) {
+        this.left = left;
+        this.right = right;
+      }
+      solveLinear() {
+        const simplifiedLeft = this.left.simplify();
+        const rightValue = this.right.evaluate();
+        if (!(simplifiedLeft instanceof plusNode)) {
+          throw new Error("Left side must simplify to ax + b");
+        }
+        const term1 = simplifiedLeft.left;
+        const term2 = simplifiedLeft.right;
+        if (term1 instanceof multiplyNode && term1.left instanceof NumberNode && term1.right instanceof SymbolNode && term2 instanceof NumberNode) {
+          const a = term1.left.evaluate();
+          const b = term2.evaluate();
+          if (a === 0) throw new Error("Coefficient 'a' cannot be zero");
+          const x = (rightValue - b) / a;
+          return x;
+        }
+        throw new Error("Equation not in solvable form (ax + b = c)");
+      }
+    }
+
+    function collectTerms(node) {
+      let xCoef = 0;
+      let constant = 0;
+      function traverse(n) {
+        if (n instanceof plusNode) {
+          traverse(n.left);
+          traverse(n.right);
+        } else if (n instanceof minusNode) {
+          traverse(n.left);
+          traverse(new multiplyNode(new NumberNode(-1), n.right));
+        } else if (n instanceof multiplyNode) {
+          if (n.left instanceof NumberNode && n.right instanceof SymbolNode && n.right.value === "x") {
+            xCoef += n.left.value;
+          } else if (n.left instanceof NumberNode && n.right instanceof NumberNode) {
+            constant += n.left.value * n.right.value;
+          }
+        } else if (n instanceof NumberNode) {
+          constant += n.value;
+        } else if (n instanceof SymbolNode && n.value === "x") {
+          xCoef += 1;
+        }
+      }
+      traverse(node);
+      return { x: xCoef, constant };
+    }
+
+    function parseExpression(str) {
+      str = str.trim();
+      if (str.includes("=")) {
+        const [left, right] = str.split("=").map(s => s.trim());
+        return { left: parseComplex(left), right: new NumberNode(parseFloat(right) || 0) };
+      }
+      return parseComplex(str);
+    }
+
+    function parseComplex(str) {
+      if (!str) throw new Error("Empty expression");
+      const tokens = tokenize(str);
+      if (tokens.length === 0) throw new Error("No valid tokens");
+      let root = parseTerm(tokens, 0);
+      let i = root.tokensConsumed;
+      while (i < tokens.length) {
+        if (tokens[i] === "+" || tokens[i] === "-") {
+          const nextTerm = parseTerm(tokens, i + 1);
+          root = tokens[i] === "+" ? new plusNode(root, nextTerm) : new minusNode(root, nextTerm);
+          i += 1 + nextTerm.tokensConsumed;
+        } else {
+          throw new Error(`Unexpected token: ${tokens[i]}`);
+        }
+      }
+      return root;
+    }
+
+    function tokenize(str) {
+      const operators = ["+", "-", "*", "="];
+      const tokens = [];
+      let current = "";
+      for (let i = 0; i < str.length; i++) {
+        if (operators.includes(str[i])) {
+          if (current) {
+            tokens.push(current);
+            current = "";
+          }
+          if (str[i] === "-" && (i === 0 || operators.includes(str[i - 1])) && i + 1 < str.length && /\d/.test(str[i + 1])) {
+            current = "-";
+          } else {
+            tokens.push(str[i]);
+          }
+        } else {
+          current += str[i];
+        }
+      }
+      if (current) tokens.push(current);
+      return tokens.filter(t => t !== "");
+    }
+
+    function parseTerm(tokens, start) {
+      if (start >= tokens.length) throw new Error("Invalid term: no tokens left");
+      if (start + 2 < tokens.length && tokens[start + 1] === "*") {
+        const coef = new NumberNode(parseFloat(tokens[start]));
+        const varX = new SymbolNode(tokens[start + 2]);
+        const node = new multiplyNode(coef, varX);
+        node.tokensConsumed = 3;
+        return node;
+      } else {
+        const value = parseFloat(tokens[start]);
+        const node = isNaN(value) ? new SymbolNode(tokens[start]) : new NumberNode(value);
+        node.tokensConsumed = 1;
+        return node;
+      }
+    }
+
+    // UI Functions
     function displayResult(text) {
       const resultDiv = document.getElementById('result');
       resultDiv.textContent = text;
@@ -275,21 +415,28 @@
       document.getElementById('input').value = example;
     }
 
-    async function simplify() {
+    function simplify() {
       const input = document.getElementById('input').value;
       try {
-        const result = await sendRequest('/simplify', input);
-        displayResult(`Simplified: ${result}`);
+        const parsed = parseExpression(input);
+        const expr = parsed.left || parsed;
+        const simplified = expr.simplify();
+        displayResult(`Simplified: ${simplified.toString()}`);
       } catch (error) {
         displayResult(`Error: ${error.message}`);
       }
     }
 
-    async function solve() {
+    function solve() {
       const input = document.getElementById('input').value;
       try {
-        const result = await sendRequest('/solve', input);
-        displayResult(result);
+        const parsed = parseExpression(input);
+        if (!parsed.left || !parsed.right) {
+          throw new Error("Enter an equation with '='");
+        }
+        const solver = new EquationSolver(parsed.left, parsed.right);
+        const solution = solver.solveLinear();
+        displayResult(`x = ${solution}`);
       } catch (error) {
         displayResult(`Error: ${error.message}`);
       }
